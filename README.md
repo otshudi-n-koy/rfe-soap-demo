@@ -26,6 +26,7 @@ Ce projet démontre une approche de tests BDD sur les flux **SOAP legacy** dans 
 
 ## Structure
 
+```
 rfe-soap-demo/
 ├── wsdl/
 │   └── facturation_legacy.wsdl          # Contrat SOAP (équivalent Swagger)
@@ -46,8 +47,7 @@ rfe-soap-demo/
 ├── conftest.py
 ├── requirements.txt
 └── pytest.ini
-
----
+```
 
 ## Lancement
 
