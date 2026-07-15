@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+    name="FacturationLegacyService"
+    targetNamespace="http://legacy.intermarche.fr/facturation"
+    xmlns="http://schemas.xmlsoap.org/wsdl/"
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+    xmlns:tns="http://legacy.intermarche.fr/facturation"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         Types de données
+    ═══════════════════════════════════════════════════════════════ -->
+    <types>
+        <xsd:schema targetNamespace="http://legacy.intermarche.fr/facturation">
+
+            <!-- Requête de soumission de facture -->
+            <xsd:element name="SoumettreFactureRequest">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="numeroFacture" type="xsd:string"/>
+                        <xsd:element name="sirenEmetteur" type="xsd:string"/>
+                        <xsd:element name="sirenDestinataire" type="xsd:string"/>
+                        <xsd:element name="dateEmission" type="xsd:string"/>
+                        <xsd:element name="montantHT" type="xsd:decimal"/>
+                        <xsd:element name="tauxTVA" type="xsd:decimal"/>
+                        <xsd:element name="montantTTC" type="xsd:decimal"/>
+                        <xsd:element name="devise" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+
+            <!-- Réponse de soumission de facture -->
+            <xsd:element name="SoumettreFactureResponse">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="idFacture" type="xsd:string"/>
+                        <xsd:element name="statut" type="xsd:string"/>
+                        <xsd:element name="message" type="xsd:string"/>
+                        <xsd:element name="dateReception" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+
+            <!-- Requête de consultation de statut -->
+            <xsd:element name="ConsulterStatutRequest">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="idFacture" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+
+            <!-- Réponse de consultation de statut -->
+            <xsd:element name="ConsulterStatutResponse">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="idFacture" type="xsd:string"/>
+                        <xsd:element name="statut" type="xsd:string"/>
+                        <xsd:element name="dateModification" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+
+            <!-- Fault -->
+            <xsd:element name="FacturationFault">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="codeFault" type="xsd:string"/>
+                        <xsd:element name="messageFault" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+
+        </xsd:schema>
+    </types>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         Messages
+    ═══════════════════════════════════════════════════════════════ -->
+    <message name="SoumettreFactureInput">
+        <part name="parameters" element="tns:SoumettreFactureRequest"/>
+    </message>
+    <message name="SoumettreFactureOutput">
+        <part name="parameters" element="tns:SoumettreFactureResponse"/>
+    </message>
+    <message name="ConsulterStatutInput">
+        <part name="parameters" element="tns:ConsulterStatutRequest"/>
+    </message>
+    <message name="ConsulterStatutOutput">
+        <part name="parameters" element="tns:ConsulterStatutResponse"/>
+    </message>
+    <message name="FacturationFaultMessage">
+        <part name="fault" element="tns:FacturationFault"/>
+    </message>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         Port Type (interface)
+    ═══════════════════════════════════════════════════════════════ -->
+    <portType name="FacturationPortType">
+
+        <operation name="SoumettreFacture">
+            <documentation>Soumet une facture électronique au système legacy</documentation>
+            <input message="tns:SoumettreFactureInput"/>
+            <output message="tns:SoumettreFactureOutput"/>
+            <fault name="FacturationFault" message="tns:FacturationFaultMessage"/>
+        </operation>
+
+        <operation name="ConsulterStatut">
+            <documentation>Consulte le statut d'une facture soumise</documentation>
+            <input message="tns:ConsulterStatutInput"/>
+            <output message="tns:ConsulterStatutOutput"/>
+            <fault name="FacturationFault" message="tns:FacturationFaultMessage"/>
+        </operation>
+
+    </portType>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         Binding (protocole SOAP)
+    ═══════════════════════════════════════════════════════════════ -->
+    <binding name="FacturationBinding" type="tns:FacturationPortType">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+
+        <operation name="SoumettreFacture">
+            <soap:operation soapAction="http://legacy.intermarche.fr/facturation/SoumettreFacture"/>
+            <input><soap:body use="literal"/></input>
+            <output><soap:body use="literal"/></output>
+            <fault name="FacturationFault"><soap:fault name="FacturationFault" use="literal"/></fault>
+        </operation>
+
+        <operation name="ConsulterStatut">
+            <soap:operation soapAction="http://legacy.intermarche.fr/facturation/ConsulterStatut"/>
+            <input><soap:body use="literal"/></input>
+            <output><soap:body use="literal"/></output>
+            <fault name="FacturationFault"><soap:fault name="FacturationFault" use="literal"/></fault>
+        </operation>
+
+    </binding>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         Service
+    ═══════════════════════════════════════════════════════════════ -->
+    <service name="FacturationLegacyService">
+        <port name="FacturationPort" binding="tns:FacturationBinding">
+            <soap:address location="http://localhost:8002/facturation"/>
+        </port>
+    </service>
+
+</definitions>

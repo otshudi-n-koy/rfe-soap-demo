@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:soapui-project
+    id="rfe-legacy-facturation"
+    activeEnvironment="Default"
+    name="RFE-Legacy-Facturation"
+    resourceRoot=""
+    soapui-version="5.7.0"
+    abortOnError="false"
+    runType="SEQUENTIAL"
+    xmlns:con="http://eviware.com/soapui/config">
+
+    <con:settings/>
+
+    <!-- ═══════════════════════════════════════════════════════
+         Interface SOAP — Facturation Legacy
+    ═══════════════════════════════════════════════════════ -->
+    <con:interface
+        xsi:type="con:WsdlInterface"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        name="FacturationLegacyService"
+        type="wsdl"
+        bindingName="{http://legacy.intermarche.fr/facturation}FacturationBinding"
+        soapVersion="1.1"
+        anonymous="optional"
+        requiresAuth="false"
+        wsdl="http://localhost:8002/facturation?wsdl"
+        xmlns:con="http://eviware.com/soapui/config">
+
+        <con:settings/>
+        <con:definitionCache type="TEXT" rootPart="http://localhost:8002/facturation?wsdl"/>
+
+        <!-- Endpoint -->
+        <con:endpoints>
+            <con:endpoint>http://localhost:8002/facturation</con:endpoint>
+        </con:endpoints>
+
+        <!-- ─── Opération 1 : SoumettreFacture ───────────────── -->
+        <con:operation
+            bindingOperationName="SoumettreFacture"
+            name="SoumettreFacture"
+            isOneWay="false"
+            action="http://legacy.intermarche.fr/facturation/SoumettreFacture"
+            type="Request-Response"
+            inputName="SoumettreFactureRequest"
+            outputName="SoumettreFactureResponse">
+
+            <con:settings/>
+
+            <!-- Test : Facture B2B valide -->
+            <con:request
+                name="TC01 - Facture B2B valide"
+                id="tc01-facture-valide"
+                encoding="UTF-8"
+                endpoint="http://localhost:8002/facturation"
+                postQueryString="false">
+                <con:settings/>
+                <con:request><![CDATA[<soapenv:Envelope
+    xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+    xmlns:fac="http://legacy.intermarche.fr/facturation">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <fac:SoumettreFactureRequest>
+         <fac:numeroFacture>FAC-SOAP-001</fac:numeroFacture>
+         <fac:sirenEmetteur>123456789</fac:sirenEmetteur>
+         <fac:sirenDestinataire>987654321</fac:sirenDestinataire>
+         <fac:dateEmission>2024-06-01</fac:dateEmission>
+         <fac:montantHT>1000.00</fac:montantHT>
+         <fac:tauxTVA>20</fac:tauxTVA>
+         <fac:montantTTC>1200.00</fac:montantTTC>
+         <fac:devise>EUR</fac:devise>
+      </fac:SoumettreFactureRequest>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request>
+                <con:assertion type="Valid HTTP Status Codes" name="HTTP 200">
+                    <con:configuration><codes>200</codes></con:configuration>
+                </con:assertion>
+                <con:assertion type="XPath Match" name="Statut SUBMITTED">
+                    <con:configuration>
+                        <path>declare namespace fac='http://legacy.intermarche.fr/facturation';
+//fac:statut/text()</path>
+                        <content>SUBMITTED</content>
+                        <allowWildcards>false</allowWildcards>
+                        <ignoreNamspaceDifferences>false</ignoreNamspaceDifferences>
+                        <ignoreComments>false</ignoreComments>
+                    </con:configuration>
+                </con:assertion>
+                <con:assertion type="XPath Match" name="ID Facture présent">
+                    <con:configuration>
+                        <path>declare namespace fac='http://legacy.intermarche.fr/facturation';
+string-length(//fac:idFacture/text()) > 0</path>
+                        <content>true</content>
+                        <allowWildcards>false</allowWildcards>
+                        <ignoreNamspaceDifferences>false</ignoreNamspaceDifferences>
+                        <ignoreComments>false</ignoreComments>
+                    </con:configuration>
+                </con:assertion>
+            </con:request>
+
+            <!-- Test : SIREN invalide -->
+            <con:request
+                name="TC02 - SIREN invalide"
+                id="tc02-siren-invalide"
+                encoding="UTF-8"
+                endpoint="http://localhost:8002/facturation"
+                postQueryString="false">
+                <con:settings/>
+                <con:request><![CDATA[<soapenv:Envelope
+    xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+    xmlns:fac="http://legacy.intermarche.fr/facturation">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <fac:SoumettreFactureRequest>
+         <fac:numeroFacture>FAC-SOAP-002</fac:numeroFacture>
+         <fac:sirenEmetteur>000000000</fac:sirenEmetteur>
+         <fac:sirenDestinataire>987654321</fac:sirenDestinataire>
+         <fac:dateEmission>2024-06-01</fac:dateEmission>
+         <fac:montantHT>500.00</fac:montantHT>
+         <fac:tauxTVA>20</fac:tauxTVA>
+         <fac:montantTTC>600.00</fac:montantTTC>
+         <fac:devise>EUR</fac:devise>
+      </fac:SoumettreFactureRequest>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request>
+                <con:assertion type="XPath Match" name="Fault INVALID_SIREN">
+                    <con:configuration>
+                        <path>declare namespace soap='http://schemas.xmlsoap.org/soap/envelope/';
+//soap:Fault/faultcode/text()</path>
+                        <content>INVALID_SIREN</content>
+                        <allowWildcards>false</allowWildcards>
+                        <ignoreNamspaceDifferences>false</ignoreNamspaceDifferences>
+                        <ignoreComments>false</ignoreComments>
+                    </con:configuration>
+                </con:assertion>
+            </con:request>
+
+            <!-- Test : TVA incohérente -->
+            <con:request
+                name="TC03 - TVA incoherente"
+                id="tc03-tva-incoherente"
+                encoding="UTF-8"
+                endpoint="http://localhost:8002/facturation"
+                postQueryString="false">
+                <con:settings/>
+                <con:request><![CDATA[<soapenv:Envelope
+    xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+    xmlns:fac="http://legacy.intermarche.fr/facturation">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <fac:SoumettreFactureRequest>
+         <fac:numeroFacture>FAC-SOAP-003</fac:numeroFacture>
+         <fac:sirenEmetteur>123456789</fac:sirenEmetteur>
+         <fac:sirenDestinataire>987654321</fac:sirenDestinataire>
+         <fac:dateEmission>2024-06-01</fac:dateEmission>
+         <fac:montantHT>100.00</fac:montantHT>
+         <fac:tauxTVA>20</fac:tauxTVA>
+         <fac:montantTTC>150.00</fac:montantTTC>
+         <fac:devise>EUR</fac:devise>
+      </fac:SoumettreFactureRequest>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request>
+                <con:assertion type="XPath Match" name="Fault TVA_MISMATCH">
+                    <con:configuration>
+                        <path>declare namespace soap='http://schemas.xmlsoap.org/soap/envelope/';
+//soap:Fault/faultcode/text()</path>
+                        <content>TVA_MISMATCH</content>
+                        <allowWildcards>false</allowWildcards>
+                        <ignoreNamspaceDifferences>false</ignoreNamspaceDifferences>
+                        <ignoreComments>false</ignoreComments>
+                    </con:configuration>
+                </con:assertion>
+            </con:request>
+
+        </con:operation>
+
+        <!-- ─── Opération 2 : ConsulterStatut ────────────────── -->
+        <con:operation
+            bindingOperationName="ConsulterStatut"
+            name="ConsulterStatut"
+            isOneWay="false"
+            action="http://legacy.intermarche.fr/facturation/ConsulterStatut"
+            type="Request-Response"
+            inputName="ConsulterStatutRequest"
+            outputName="ConsulterStatutResponse">
+
+            <con:settings/>
+
+            <!-- Test : Consultation statut existant -->
+            <con:request
+                name="TC04 - Consultation statut valide"
+                id="tc04-statut-valide"
+                encoding="UTF-8"
+                endpoint="http://localhost:8002/facturation"
+                postQueryString="false">
+                <con:settings/>
+                <con:request><![CDATA[<soapenv:Envelope
+    xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+    xmlns:fac="http://legacy.intermarche.fr/facturation">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <fac:ConsulterStatutRequest>
+         <fac:idFacture>FAC-SOAP-001</fac:idFacture>
+      </fac:ConsulterStatutRequest>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request>
+                <con:assertion type="Valid HTTP Status Codes" name="HTTP 200">
+                    <con:configuration><codes>200</codes></con:configuration>
+                </con:assertion>
+                <con:assertion type="XPath Match" name="Statut présent">
+                    <con:configuration>
+                        <path>declare namespace fac='http://legacy.intermarche.fr/facturation';
+string-length(//fac:statut/text()) > 0</path>
+                        <content>true</content>
+                        <allowWildcards>false</allowWildcards>
+                        <ignoreNamspaceDifferences>false</ignoreNamspaceDifferences>
+                        <ignoreComments>false</ignoreComments>
+                    </con:configuration>
+                </con:assertion>
+            </con:request>
+
+            <!-- Test : Facture introuvable -->
+            <con:request
+                name="TC05 - Facture introuvable"
+                id="tc05-facture-introuvable"
+                encoding="UTF-8"
+                endpoint="http://localhost:8002/facturation"
+                postQueryString="false">
+                <con:settings/>
+                <con:request><![CDATA[<soapenv:Envelope
+    xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+    xmlns:fac="http://legacy.intermarche.fr/facturation">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <fac:ConsulterStatutRequest>
+         <fac:idFacture>INEXISTANT-999</fac:idFacture>
+      </fac:ConsulterStatutRequest>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request>
+                <con:assertion type="XPath Match" name="Fault INVOICE_NOT_FOUND">
+                    <con:configuration>
+                        <path>declare namespace soap='http://schemas.xmlsoap.org/soap/envelope/';
+//soap:Fault/faultcode/text()</path>
+                        <content>INVOICE_NOT_FOUND</content>
+                        <allowWildcards>false</allowWildcards>
+                        <ignoreNamspaceDifferences>false</ignoreNamspaceDifferences>
+                        <ignoreComments>false</ignoreComments>
+                    </con:configuration>
+                </con:assertion>
+            </con:request>
+
+        </con:operation>
+
+    </con:interface>
+
+    <!-- ═══════════════════════════════════════════════════════
+         Test Suite — Campagne RFE Legacy
+    ═══════════════════════════════════════════════════════ -->
+    <con:testSuite name="Campagne RFE Legacy SOAP">
+        <con:settings/>
+
+        <con:testCase name="TC Emission SOAP - Flux nominal" failOnError="true" failTestCaseOnErrors="true">
+            <con:settings/>
+            <con:testStep type="request" name="TC01 - Facture B2B valide">
+                <con:settings/>
+                <con:config
+                    interface="FacturationLegacyService"
+                    operation="SoumettreFacture"
+                    request="TC01 - Facture B2B valide"/>
+            </con:testStep>
+        </con:testCase>
+
+        <con:testCase name="TC Emission SOAP - Rejets" failOnError="false" failTestCaseOnErrors="true">
+            <con:settings/>
+            <con:testStep type="request" name="TC02 - SIREN invalide">
+                <con:settings/>
+                <con:config
+                    interface="FacturationLegacyService"
+                    operation="SoumettreFacture"
+                    request="TC02 - SIREN invalide"/>
+            </con:testStep>
+            <con:testStep type="request" name="TC03 - TVA incoherente">
+                <con:settings/>
+                <con:config
+                    interface="FacturationLegacyService"
+                    operation="SoumettreFacture"
+                    request="TC03 - TVA incoherente"/>
+            </con:testStep>
+        </con:testCase>
+
+        <con:testCase name="TC Consultation SOAP" failOnError="false" failTestCaseOnErrors="true">
+            <con:settings/>
+            <con:testStep type="request" name="TC04 - Consultation statut valide">
+                <con:settings/>
+                <con:config
+                    interface="FacturationLegacyService"
+                    operation="ConsulterStatut"
+                    request="TC04 - Consultation statut valide"/>
+            </con:testStep>
+            <con:testStep type="request" name="TC05 - Facture introuvable">
+                <con:settings/>
+                <con:config
+                    interface="FacturationLegacyService"
+                    operation="ConsulterStatut"
+                    request="TC05 - Facture introuvable"/>
+            </con:testStep>
+        </con:testCase>
+
+    </con:testSuite>
+
+</con:soapui-project>
